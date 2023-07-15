@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Recipe App',
+      title: 'DishMate',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -28,6 +28,57 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  int _selectedIndex = 0;
+
+  static List<Widget> _widgetOptions = <Widget>[
+    MainPageContent(), // Main Page Content
+    SearchPageContent(), // Search Page Content
+    SavedRecipesPageContent(), // Saved Recipes Page Content
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Recipe App'),
+      ),
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Main Page',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search Page',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Saved Recipes',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+
+class MainPageContent extends StatefulWidget {
+  @override
+  _MainPageContentState createState() => _MainPageContentState();
+}
+
+class _MainPageContentState extends State<MainPageContent> {
   List<String> ingredientsList = [];
   List<String> dietsList = [];
   String cookTime = '';
@@ -81,7 +132,11 @@ class _MainPageState extends State<MainPage> {
           {
             "model": 'gpt-3.5-turbo',
             "messages": [
-              {"role": "user", "content": "hello! how are you?"}
+              {
+                "role": "user",
+                "content":
+                    "You are a personal chef's assistant. Create me a recipe that includes 1 or more of the following ingredients (you don't have to include every ingredient, but don't add any extra ones not listed): $ingredientsList. Make sure the recipe follows one or more of these diets (if no diet is listed after this, then don't worry about it): $dietsList . The dish must take $cookTime minutes or less to prepare and cook. Respond with 1. Title of Recipe 2. Cook Time 3. Ingredients 4. Instructions 5. Diets that it could be included in"
+              }
             ],
             "max_tokens": 400,
           },
@@ -110,132 +165,157 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Recipe App'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Ingredients Section
-            Text(
-              'Ingredients',
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Ingredients Section
+          Text(
+            'Ingredients',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          TextField(
+            onChanged: (value) => cookTime = value,
+            decoration: InputDecoration(
+              labelText: 'Add Ingredient',
+            ),
+            onSubmitted: addIngredient,
+          ),
+          ElevatedButton(
+            onPressed: () => addIngredient(cookTime),
+            child: Text('Add'),
+          ),
+          SizedBox(height: 16.0),
+          Text(
+            'Ingredients List:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16.0,
+            ),
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: ingredientsList.length,
+            itemBuilder: (context, index) {
+              final ingredient = ingredientsList[index];
+              return Row(
+                children: [
+                  Expanded(child: Text(ingredient)),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => deleteIngredient(ingredient),
+                  ),
+                ],
+              );
+            },
+          ),
+          SizedBox(height: 32.0),
+
+          // Diets Section
+          Text(
+            'Diets',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          CheckboxListTile(
+            title: Text('Paleo'),
+            value: dietsList.contains('Paleo'),
+            onChanged: (value) => toggleDiet('Paleo'),
+          ),
+          CheckboxListTile(
+            title: Text('Keto'),
+            value: dietsList.contains('Keto'),
+            onChanged: (value) => toggleDiet('Keto'),
+          ),
+          CheckboxListTile(
+            title: Text('Gluten-Free'),
+            value: dietsList.contains('Gluten-Free'),
+            onChanged: (value) => toggleDiet('Gluten-Free'),
+          ),
+          CheckboxListTile(
+            title: Text('Healthy'),
+            value: dietsList.contains('Healthy'),
+            onChanged: (value) => toggleDiet('Healthy'),
+          ),
+          SizedBox(height: 32.0),
+
+          // Cook Time Section
+          Text(
+            'Cook Time',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                cookTime = value;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: 'Cook Time (minutes)',
+            ),
+          ),
+          SizedBox(height: 32.0),
+
+          // Generate Recipe Button
+          ElevatedButton(
+            onPressed: generateRecipes,
+            child: Text('Generate Recipe'),
+          ),
+          SizedBox(height: 32.0),
+
+          // Generated Recipe Text
+          Container(
+            padding: EdgeInsets.all(16.0),
+            color: Colors.grey[200],
+            child: Text(
+              responseText,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18.0,
-              ),
-            ),
-            SizedBox(height: 8.0),
-            TextField(
-              onChanged: (value) => cookTime = value,
-              decoration: InputDecoration(
-                labelText: 'Add Ingredient',
-              ),
-              onSubmitted: addIngredient,
-            ),
-            ElevatedButton(
-              onPressed: () => addIngredient(cookTime),
-              child: Text('Add'),
-            ),
-            SizedBox(height: 16.0),
-            Text(
-              'Ingredients List:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
                 fontSize: 16.0,
               ),
             ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: ingredientsList.length,
-              itemBuilder: (context, index) {
-                final ingredient = ingredientsList[index];
-                return Row(
-                  children: [
-                    Expanded(child: Text(ingredient)),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () => deleteIngredient(ingredient),
-                    ),
-                  ],
-                );
-              },
-            ),
-            SizedBox(height: 32.0),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            // Diets Section
-            Text(
-              'Diets',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18.0,
-              ),
-            ),
-            SizedBox(height: 8.0),
-            CheckboxListTile(
-              title: Text('Paleo'),
-              value: dietsList.contains('Paleo'),
-              onChanged: (value) => toggleDiet('Paleo'),
-            ),
-            CheckboxListTile(
-              title: Text('Keto'),
-              value: dietsList.contains('Keto'),
-              onChanged: (value) => toggleDiet('Keto'),
-            ),
-            CheckboxListTile(
-              title: Text('Gluten-Free'),
-              value: dietsList.contains('Gluten-Free'),
-              onChanged: (value) => toggleDiet('Gluten-Free'),
-            ),
-            CheckboxListTile(
-              title: Text('Healthy'),
-              value: dietsList.contains('Healthy'),
-              onChanged: (value) => toggleDiet('Healthy'),
-            ),
-            SizedBox(height: 32.0),
+class SearchPageContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Search Page',
+        style: TextStyle(
+          fontSize: 24.0,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
 
-            // Cook Time Section
-            Text(
-              'Cook Time',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18.0,
-              ),
-            ),
-            SizedBox(height: 8.0),
-            TextField(
-              onChanged: (value) {
-                setState(() {
-                  cookTime = value;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: 'Cook Time (minutes)',
-              ),
-            ),
-            SizedBox(height: 32.0),
-
-            // Generate Recipe Button
-            ElevatedButton(
-              onPressed: generateRecipes,
-              child: Text('Generate Recipe'),
-            ),
-            SizedBox(height: 32.0),
-
-            // Generated Recipe Text
-            Container(
-              padding: EdgeInsets.all(16.0),
-              color: Colors.grey[200],
-              child: Text(
-                responseText,
-                style: TextStyle(
-                  fontSize: 16.0,
-                ),
-              ),
-            ),
-          ],
+class SavedRecipesPageContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Saved Recipes Page',
+        style: TextStyle(
+          fontSize: 24.0,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
