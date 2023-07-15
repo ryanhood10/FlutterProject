@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 Future<void> main() async {
   await dotenv.load();
-  print('Environment variables loaded: ${dotenv.env['token']}');
+  // print('Environment variables loaded: ${dotenv.env['token']}');
   runApp(MyApp());
 }
 
@@ -90,7 +90,7 @@ class _MainPageState extends State<MainPage> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        print(responseData); // Add this line to check the parsed response
+        // print(responseData); // Add this line to check the parsed response
         final recipe = responseData['choices'][0]['message']['content'];
         setState(() {
           responseText = recipe;
