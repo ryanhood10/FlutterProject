@@ -2,10 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 Future<void> main() async {
   await dotenv.load();
-  // print('Environment variables loaded: ${dotenv.env['token']}');
+  await Hive.initFlutter(); // Initialize Hive
+  Hive.registerAdapter(
+      SavedRecipeAdapter()); // Register the adapter for SavedRecipe model
+  await Hive.openBox('recipes'); // Open the Hive box
   runApp(MyApp());
 }
 
@@ -40,6 +45,12 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void dispose() {
+    Hive.close(); // Close the Hive box when the app is disposed
+    super.dispose();
   }
 
   @override
@@ -163,6 +174,23 @@ class _MainPageContentState extends State<MainPageContent> {
     }
   }
 
+  void saveRecipe() async {
+    final box = Hive.box('recipes'); // Access the Hive box
+
+    final savedRecipe = SavedRecipe(
+      title: 'Recipe Title',
+      recipeText: responseText,
+    );
+
+    await box.add(savedRecipe); // Add the saved recipe to the box
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Recipe saved.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -279,11 +307,19 @@ class _MainPageContentState extends State<MainPageContent> {
           Container(
             padding: EdgeInsets.all(16.0),
             color: Colors.grey[200],
-            child: Text(
-              responseText,
-              style: TextStyle(
-                fontSize: 16.0,
-              ),
+            child: Column(
+              children: [
+                Text(
+                  responseText,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: saveRecipe,
+                  child: Text('Save Recipe'),
+                ),
+              ],
             ),
           ),
         ],
@@ -310,14 +346,46 @@ class SearchPageContent extends StatelessWidget {
 class SavedRecipesPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Saved Recipes Page',
-        style: TextStyle(
-          fontSize: 24.0,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+    final box = Hive.box('recipes'); // Access the Hive box
+
+    return ListView.builder(
+      itemCount: box.length,
+      itemBuilder: (context, index) {
+        final savedRecipe = box.getAt(index) as SavedRecipe;
+        return ListTile(
+          title: Text(savedRecipe.title),
+          subtitle: Text(savedRecipe.recipeText),
+        );
+      },
     );
+  }
+}
+
+class SavedRecipe {
+  String title;
+  String recipeText;
+
+  SavedRecipe({
+    required this.title,
+    required this.recipeText,
+  });
+}
+
+class SavedRecipeAdapter extends TypeAdapter<SavedRecipe> {
+  @override
+  int get typeId => 0;
+
+  @override
+  SavedRecipe read(BinaryReader reader) {
+    return SavedRecipe(
+      title: reader.read(),
+      recipeText: reader.read(),
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, SavedRecipe obj) {
+    writer.write(obj.title);
+    writer.write(obj.recipeText);
   }
 }
