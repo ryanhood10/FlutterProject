@@ -26,17 +26,21 @@ class _MainPageState extends State<MainPage> {
   List<String> ingredientsList = [];
   List<String> dietsList = [];
   String cookTime = '';
+  String ingredients = '';
+  String diet = '';
   String recipeText = '';
 
   void addIngredient(String ingredient) {
     setState(() {
       ingredientsList.add(ingredient);
+      ingredients = ingredientsList.join(", ");
     });
   }
 
   void deleteIngredient(String ingredient) {
     setState(() {
       ingredientsList.remove(ingredient);
+      ingredients = ingredientsList.join(", ");
     });
   }
 
@@ -47,6 +51,7 @@ class _MainPageState extends State<MainPage> {
       } else {
         dietsList.add(diet);
       }
+      this.diet = dietsList.join(", ");
     });
   }
 
@@ -56,7 +61,10 @@ class _MainPageState extends State<MainPage> {
     Future.delayed(Duration(seconds: 2), () {
       setState(() {
         // Replace this with the actual API response
-        recipeText = 'This is the generated recipe.';
+        recipeText = 'This is the generated recipe.\n'
+            'Ingredients: $ingredients\n'
+            'Diet: $diet\n'
+            'Cook Time: $cookTime minutes';
       });
     });
   }
@@ -74,32 +82,32 @@ class _MainPageState extends State<MainPage> {
           children: [
             // Ingredients Section
             Text(
-              'Ingredients', // End of Text('Ingredients')
+              'Ingredients',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
               ),
-            ), // End of Text
-            SizedBox(height: 8.0), // End of SizedBox
+            ),
+            SizedBox(height: 8.0),
             TextField(
               onChanged: (value) => cookTime = value,
               decoration: InputDecoration(
                 labelText: 'Add Ingredient',
               ),
               onSubmitted: addIngredient,
-            ), // End of TextField
+            ),
             ElevatedButton(
               onPressed: () => addIngredient(cookTime),
               child: Text('Add'),
-            ), // End of ElevatedButton
-            SizedBox(height: 16.0), // End of SizedBox
+            ),
+            SizedBox(height: 16.0),
             Text(
-              'Ingredients List:', // End of Text('Ingredients List:')
+              'Ingredients List:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16.0,
               ),
-            ), // End of Text
+            ),
             ListView.builder(
               shrinkWrap: true,
               itemCount: ingredientsList.length,
@@ -115,49 +123,49 @@ class _MainPageState extends State<MainPage> {
                   ],
                 );
               },
-            ), // End of ListView.builder
-            SizedBox(height: 32.0), // End of SizedBox
+            ),
+            SizedBox(height: 32.0),
 
             // Diets Section
             Text(
-              'Diets', // End of Text('Diets')
+              'Diets',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
               ),
-            ), // End of Text
-            SizedBox(height: 8.0), // End of SizedBox
+            ),
+            SizedBox(height: 8.0),
             CheckboxListTile(
               title: Text('Paleo'),
               value: dietsList.contains('Paleo'),
               onChanged: (value) => toggleDiet('Paleo'),
-            ), // End of CheckboxListTile (Paleo)
+            ),
             CheckboxListTile(
               title: Text('Keto'),
               value: dietsList.contains('Keto'),
               onChanged: (value) => toggleDiet('Keto'),
-            ), // End of CheckboxListTile (Keto)
+            ),
             CheckboxListTile(
               title: Text('Gluten-Free'),
               value: dietsList.contains('Gluten-Free'),
               onChanged: (value) => toggleDiet('Gluten-Free'),
-            ), // End of CheckboxListTile (Gluten-Free)
+            ),
             CheckboxListTile(
               title: Text('Healthy'),
               value: dietsList.contains('Healthy'),
               onChanged: (value) => toggleDiet('Healthy'),
-            ), // End of CheckboxListTile (Healthy)
-            SizedBox(height: 32.0), // End of SizedBox
+            ),
+            SizedBox(height: 32.0),
 
             // Cook Time Section
             Text(
-              'Cook Time', // End of Text('Cook Time')
+              'Cook Time',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
               ),
-            ), // End of Text
-            SizedBox(height: 8.0), // End of SizedBox
+            ),
+            SizedBox(height: 8.0),
             TextField(
               onChanged: (value) {
                 setState(() {
@@ -167,27 +175,27 @@ class _MainPageState extends State<MainPage> {
               decoration: InputDecoration(
                 labelText: 'Cook Time (minutes)',
               ),
-            ), // End of TextField
-            SizedBox(height: 32.0), // End of SizedBox
+            ),
+            SizedBox(height: 32.0),
 
             // Generate Recipe Button
             ElevatedButton(
               onPressed: generateRecipes,
               child: Text('Generate Recipe'),
-            ), // End of ElevatedButton
-            SizedBox(height: 32.0), // End of SizedBox
+            ),
+            SizedBox(height: 32.0),
 
             // Generated Recipe Text
             Container(
               padding: EdgeInsets.all(16.0),
               color: Colors.grey[200],
               child: Text(
-                recipeText, // End of Text(recipeText)
+                recipeText,
                 style: TextStyle(
                   fontSize: 16.0,
                 ),
               ),
-            ), // End of Container
+            ),
           ],
         ),
       ),
