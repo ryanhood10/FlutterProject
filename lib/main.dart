@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
-void main() {
+Future<void> main() async {
+  await dotenv.load();
+  print('Environment variables loaded: ${dotenv.env['token']}');
   runApp(MyApp());
 }
 
@@ -28,7 +33,7 @@ class _MainPageState extends State<MainPage> {
   String cookTime = '';
   String ingredients = '';
   String diet = '';
-  String recipeText = '';
+  String responseText = '';
 
   void addIngredient(String ingredient) {
     setState(() {
@@ -55,18 +60,52 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void generateRecipes() {
-    // TODO: Implement API call to generate recipes
-    // Simulating API call delay with a Future.delayed
-    Future.delayed(Duration(seconds: 2), () {
+  generateRecipes() async {
+    setState(() => responseText = 'Loading...');
+    try {
+      final apiKey = dotenv.env['token'];
+      if (apiKey == null) {
+        setState(() {
+          responseText = 'API key not found.';
+        });
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode(
+          {
+            "model": 'gpt-3.5-turbo',
+            "messages": [
+              {"role": "user", "content": "hello! how are you?"}
+            ],
+            "max_tokens": 400,
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print(responseData); // Add this line to check the parsed response
+        final recipe = responseData['choices'][0]['message']['content'];
+        setState(() {
+          responseText = recipe;
+        });
+      } else {
+        setState(() {
+          responseText = 'Error occurred while generating recipe.';
+        });
+      }
+    } catch (error) {
+      print('Error in generateRecipes: $error');
       setState(() {
-        // Replace this with the actual API response
-        recipeText = 'This is the generated recipe.\n'
-            'Ingredients: $ingredients\n'
-            'Diet: $diet\n'
-            'Cook Time: $cookTime minutes';
+        responseText = 'Error occurred while generating recipe.';
       });
-    });
+    }
   }
 
   @override
@@ -190,7 +229,7 @@ class _MainPageState extends State<MainPage> {
               padding: EdgeInsets.all(16.0),
               color: Colors.grey[200],
               child: Text(
-                recipeText,
+                responseText,
                 style: TextStyle(
                   fontSize: 16.0,
                 ),
