@@ -39,4 +39,4 @@ This project is licensed under the MIT License.
 
 ---
 
-Happy cooking with DishMate!
+Happy cooking with DishMate! 🍽️
